@@ -3,6 +3,7 @@ import {
   initial,
   summary,
   rebalance,
+  validateProposal,
   plantState,
   activeSeconds,
   skillProgress,
@@ -22,6 +23,14 @@ const task = (id: string, date = "2026-10-12", minutes = 120): Task => ({
 });
 const state = () => structuredClone(initial);
 describe("Bloom critical rules", () => {
+  it("rejects edited proposals that move exams, overlap rest or exceed deadlines", () => {
+    const s = state();
+    s.tasks = [{ ...task("exam"), category: "Exams" }, task("flex")];
+    s.rests = [{ date: "2026-10-13", start: "12:00", end: "18:00", health: 40 }];
+    expect(validateProposal(s, s.tasks.map(t => ({ ...t, date: "2026-10-13", time: "13:00" })), "2026-10-12").length).toBeGreaterThan(0);
+    expect(validateProposal(s, s.tasks.map(t => t.id === "flex" ? { ...t, date: "2026-10-26" } : t), "2026-10-12").length).toBeGreaterThan(0);
+    expect(validateProposal(s, s.tasks.map(t => t.id === "flex" ? { ...t, date: "2026-10-13", time: "09:00" } : t), "2026-10-12")).toEqual([]);
+  });
   it("detects overload and proposes without mutating original", () => {
     const s = state();
     s.capacity = 4;
