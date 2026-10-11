@@ -57,7 +57,7 @@ export function rebalance(s:State, days=weekDays(), today=dayKey()):{tasks:Task[
   const date=candidates.find(d=>(used[d]||0)+t.minutes<=budget);
   if(date){t.date=date;t.time='09:00';used[date]=(used[date]||0)+t.minutes;continue;}
   // Only defer beyond the current week when the hard deadline allows it.
-  let deferred=''; for(let i=1;i<=21;i++){const d=dayKey(addDays(new Date(days[6]+'T12:00:00'),i));if(t.deadline&&d>t.deadline)break;if(s.rests.some(r=>r.date===d))continue;const other=result.filter(x=>x.id!==t.id&&x.date===d).reduce((n,x)=>n+x.minutes,0);if(other+t.minutes<=budget){deferred=d;break;}}
+  let deferred=''; for(let i=1;i<=21;i++){const d=dayKey(addDays(new Date((days.at(-1)||today)+'T12:00:00'),i));if(t.deadline&&d>t.deadline)break;if(s.rests.some(r=>r.date===d))continue;const other=result.filter(x=>x.id!==t.id&&x.date===d).reduce((n,x)=>n+x.minutes,0);const futureBudget=Math.min(480,s.capacity*60/6);const futureWeek=weekDays(new Date(d+'T12:00:00'));const weekLoad=result.filter(x=>x.id!==t.id&&futureWeek.includes(x.date)).reduce((n,x)=>n+x.minutes,0);if(other+t.minutes<=futureBudget&&weekLoad+t.minutes<=s.capacity*60){deferred=d;break;}}
   if(deferred){t.date=deferred;t.time='09:00';}else conflicts.push(`${t.title}: cannot fit before ${t.deadline||'the planning horizon'}. Shorten or split this task, or increase available hours.`);
  }
  // Allocate non-overlapping times around fixed examinations and partial rest periods.
