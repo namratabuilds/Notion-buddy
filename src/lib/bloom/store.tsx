@@ -1,21 +1,230 @@
-import Dexie, {type Table} from 'dexie';
-import {useLiveQuery} from 'dexie-react-hooks';
-import {createContext,useContext,useEffect,useState,type ReactNode} from 'react';
-import {toast} from 'sonner';
-import {addDays} from 'date-fns';
-import {initial,dayKey,weekDays,plantState,activeSeconds,type State,type Task,type Event} from './engine';
-class BloomDB extends Dexie { declare state:Table<State,string>; constructor(){super('bloom-planner');this.version(1).stores({state:'id'});} }
-export const db=new BloomDB();
-export async function mutate(fn:(s:State)=>void){try{await db.transaction('rw',db.state,async()=>{const s=await db.state.get('bloom')||structuredClone(initial);fn(s);await db.state.put(s);});}catch{toast.error('Your change could not be saved. Please try again.');}}
-export function event(s:State,type:string,entity?:string,minutes?:number,id:string=crypto.randomUUID()){if(s.events.some(e=>e.id===id))return;s.events.push({id,type,entity,minutes,at:Date.now()});}
-const Context=createContext<State>(initial);
-export function BloomProvider({children}:{children:ReactNode}){const [ready,setReady]=useState(false);const state=useLiveQuery(()=>db.state.get('bloom'),[],initial);useEffect(()=>{db.open().then(()=>setReady(true)).catch(()=>toast.error('Offline storage is unavailable. Allow browser storage and refresh.'));},[]);return <Context.Provider value={state||initial}>{ready?children:<div className="loading-bloom">Bloom is taking root…</div>}</Context.Provider>;}
-export const useBloom=()=>useContext(Context);
-export const toggleTask=(task:Task)=>mutate(s=>{const t=s.tasks.find(x=>x.id===task.id);if(!t)return;t.done=!t.done;if(t.done)event(s,'task-completed',t.id,undefined,`task-completed:${t.id}`);else s.events=s.events.filter(e=>e.id!==`task-completed:${t.id}`);});
-export const finishTimer=()=>mutate(s=>{if(!s.timer)return;const t=s.timer;const minutes=activeSeconds(t)/60;if(t.mode==='Focus'&&minutes>0)event(s,'focus-completed',t.entity,minutes,`session:${t.id}`);s.timer=null;});
-export const declareRest=(date:string,start='00:00',end='23:59')=>mutate(s=>{const health=plantState(s).health;s.rests=s.rests.filter(r=>r.date!==date);s.rests.push({date,start,end,health});event(s,'rest-declared',date);});
-export async function loadDemo(){await mutate(s=>{if(s.tasks.some(t=>t.demo))return;const today=dayKey();const days=Array.from({length:7},(_,i)=>dayKey(addDays(new Date(),i)));const specs=[['Read chapter 4 · Cognitive psychology','Study Sessions','Medium',90,today,days[6]],['Linear algebra problem set','Assignments','High',120,today,dayKey(addDays(new Date(),3))],['Python · Practice with dictionaries','Skill Learning','Low',90,today,dayKey(addDays(new Date(),14))],['Research for sustainability project','Projects','Medium',120,today,dayKey(addDays(new Date(),14))],['Midterm · Computer science','Exams','Urgent',120,days[1],days[1]],['Literature review draft','Assignments','High',120,today,days[5]],['Build a personal portfolio','Projects','Low',120,today,dayKey(addDays(new Date(),14))],['Data structures practice','Study Sessions','Medium',90,today,dayKey(addDays(new Date(),14))]];
- s.tasks.push(...specs.map((x,i)=>({id:`demo-task-${i}`,title:String(x[0]),category:String(x[1]),priority:String(x[2]),minutes:Number(x[3]),date:String(x[4]),deadline:String(x[5]),time:`${String(9+i%4*2).padStart(2,'0')}:00`,description:'Example task from your demo week.',done:i===0,demo:true})));
- const names=['Web Development','Python','Data Structures & Algorithms','Artificial Intelligence','Communication','Public Speaking'];s.skills.push(...names.map((name,i)=>({id:`demo-skill-${i}`,name,goal:i===0?'Build and publish a personal website':'Build confidence through regular practice',target:dayKey(addDays(new Date(),30)),hours:20,notes:'',resource:'',demo:true,milestones:[{id:`demo-m-${i}-0`,title:'Learn the foundations',major:false,done:i<2},{id:`demo-m-${i}-1`,title:'Complete a guided project',major:true,done:i===0},{id:`demo-m-${i}-2`,title:'Create something independently',major:true,done:false}]})));
- const events:Event[]=[{id:'task-completed:demo-task-0',type:'task-completed',entity:'demo-task-0',at:Date.now(),demo:true},{id:'demo-focus',type:'focus-completed',entity:'demo-skill-1',minutes:25,at:Date.now(),demo:true}];for(const sk of s.skills.filter(x=>x.demo))for(const m of sk.milestones.filter(x=>x.done))events.push({id:`milestone:${m.id}`,type:'milestone-completed',entity:sk.id,at:Date.now(),demo:true});s.events.push(...events);const rest=days[5]||today;if(!s.rests.some(r=>r.date===rest))s.rests.push({date:rest,start:'00:00',end:'23:59',health:40,demo:true});if(!s.onboarded)s.capacity=12;s.onboarded=true;});toast.success('Demo week loaded. Your own records stay separate.');}
-export const removeDemo=()=>mutate(s=>{const ids=new Set([...s.tasks.filter(t=>t.demo).map(t=>t.id),...s.skills.filter(t=>t.demo).map(t=>t.id)]);s.tasks=s.tasks.filter(t=>!t.demo);s.skills=s.skills.filter(t=>!t.demo);s.events=s.events.filter(e=>!e.demo&&!ids.has(e.entity||''));s.rests=s.rests.filter(r=>!r.demo);});
+import Dexie, { type Table } from "dexie";
+import { useLiveQuery } from "dexie-react-hooks";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { addDays } from "date-fns";
+import {
+  initial,
+  dayKey,
+  weekDays,
+  plantState,
+  activeSeconds,
+  type State,
+  type Task,
+  type Event,
+} from "./engine";
+class BloomDB extends Dexie {
+  declare state: Table<State, string>;
+  constructor() {
+    super("bloom-planner");
+    this.version(1).stores({ state: "id" });
+  }
+}
+export const db = new BloomDB();
+export async function mutate(fn: (s: State) => void) {
+  try {
+    await db.transaction("rw", db.state, async () => {
+      const s = (await db.state.get("bloom")) || structuredClone(initial);
+      fn(s);
+      await db.state.put(s);
+    });
+  } catch {
+    toast.error("Your change could not be saved. Please try again.");
+  }
+}
+export function event(
+  s: State,
+  type: string,
+  entity?: string,
+  minutes?: number,
+  id: string = crypto.randomUUID(),
+) {
+  if (s.events.some((e) => e.id === id)) return;
+  s.events.push({ id, type, entity, minutes, at: Date.now() });
+}
+const Context = createContext<State>(initial);
+export function BloomProvider({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(false);
+  const state = useLiveQuery(() => db.state.get("bloom"), [], initial);
+  useEffect(() => {
+    db.open()
+      .then(() => setReady(true))
+      .catch(() =>
+        toast.error("Offline storage is unavailable. Allow browser storage and refresh."),
+      );
+  }, []);
+  return (
+    <Context.Provider value={state || initial}>
+      {ready ? children : <div className="loading-bloom">Bloom is taking root…</div>}
+    </Context.Provider>
+  );
+}
+export const useBloom = () => useContext(Context);
+export const toggleTask = (task: Task) =>
+  mutate((s) => {
+    const t = s.tasks.find((x) => x.id === task.id);
+    if (!t) return;
+    t.done = !t.done;
+    if (t.done) event(s, "task-completed", t.id, undefined, `task-completed:${t.id}`);
+    else s.events = s.events.filter((e) => e.id !== `task-completed:${t.id}`);
+  });
+export const finishTimer = () =>
+  mutate((s) => {
+    if (!s.timer) return;
+    const t = s.timer;
+    const minutes = activeSeconds(t) / 60;
+    if (t.mode === "Focus" && minutes > 0)
+      event(s, "focus-completed", t.entity, minutes, `session:${t.id}`);
+    s.timer = null;
+  });
+export const declareRest = (date: string, start = "00:00", end = "23:59") =>
+  mutate((s) => {
+    const health = plantState(s).health;
+    s.rests = s.rests.filter((r) => r.date !== date);
+    s.rests.push({ date, start, end, health });
+    event(s, "rest-declared", date);
+  });
+export async function loadDemo() {
+  await mutate((s) => {
+    if (s.tasks.some((t) => t.demo)) return;
+    const today = dayKey();
+    const days = Array.from({ length: 7 }, (_, i) => dayKey(addDays(new Date(), i)));
+    const specs = [
+      ["Read chapter 4 · Cognitive psychology", "Study Sessions", "Medium", 90, today, days[6]],
+      [
+        "Linear algebra problem set",
+        "Assignments",
+        "High",
+        120,
+        today,
+        dayKey(addDays(new Date(), 3)),
+      ],
+      [
+        "Python · Practice with dictionaries",
+        "Skill Learning",
+        "Low",
+        90,
+        today,
+        dayKey(addDays(new Date(), 14)),
+      ],
+      [
+        "Research for sustainability project",
+        "Projects",
+        "Medium",
+        120,
+        today,
+        dayKey(addDays(new Date(), 14)),
+      ],
+      ["Midterm · Computer science", "Exams", "Urgent", 120, days[1], days[1]],
+      ["Literature review draft", "Assignments", "High", 120, today, days[5]],
+      [
+        "Build a personal portfolio",
+        "Projects",
+        "Low",
+        120,
+        today,
+        dayKey(addDays(new Date(), 14)),
+      ],
+      [
+        "Data structures practice",
+        "Study Sessions",
+        "Medium",
+        90,
+        today,
+        dayKey(addDays(new Date(), 14)),
+      ],
+    ];
+    s.tasks.push(
+      ...specs.map((x, i) => ({
+        id: `demo-task-${i}`,
+        title: String(x[0]),
+        category: String(x[1]),
+        priority: String(x[2]),
+        minutes: Number(x[3]),
+        date: String(x[4]),
+        deadline: String(x[5]),
+        time: `${String(9 + (i % 4) * 2).padStart(2, "0")}:00`,
+        description: "Example task from your demo week.",
+        done: i === 0,
+        demo: true,
+      })),
+    );
+    const names = [
+      "Web Development",
+      "Python",
+      "Data Structures & Algorithms",
+      "Artificial Intelligence",
+      "Communication",
+      "Public Speaking",
+    ];
+    s.skills.push(
+      ...names.map((name, i) => ({
+        id: `demo-skill-${i}`,
+        name,
+        goal:
+          i === 0
+            ? "Build and publish a personal website"
+            : "Build confidence through regular practice",
+        target: dayKey(addDays(new Date(), 30)),
+        hours: 20,
+        notes: "",
+        resource: "",
+        demo: true,
+        milestones: [
+          { id: `demo-m-${i}-0`, title: "Learn the foundations", major: false, done: i < 2 },
+          { id: `demo-m-${i}-1`, title: "Complete a guided project", major: true, done: i === 0 },
+          {
+            id: `demo-m-${i}-2`,
+            title: "Create something independently",
+            major: true,
+            done: false,
+          },
+        ],
+      })),
+    );
+    const events: Event[] = [
+      {
+        id: "task-completed:demo-task-0",
+        type: "task-completed",
+        entity: "demo-task-0",
+        at: Date.now(),
+        demo: true,
+      },
+      {
+        id: "demo-focus",
+        type: "focus-completed",
+        entity: "demo-skill-1",
+        minutes: 25,
+        at: Date.now(),
+        demo: true,
+      },
+    ];
+    for (const sk of s.skills.filter((x) => x.demo))
+      for (const m of sk.milestones.filter((x) => x.done))
+        events.push({
+          id: `milestone:${m.id}`,
+          type: "milestone-completed",
+          entity: sk.id,
+          at: Date.now(),
+          demo: true,
+        });
+    s.events.push(...events);
+    const rest = days[5] || today;
+    if (!s.rests.some((r) => r.date === rest))
+      s.rests.push({ date: rest, start: "00:00", end: "23:59", health: 40, demo: true });
+    if (!s.onboarded) s.capacity = 12;
+    s.onboarded = true;
+  });
+  toast.success("Demo week loaded. Your own records stay separate.");
+}
+export const removeDemo = () =>
+  mutate((s) => {
+    const ids = new Set([
+      ...s.tasks.filter((t) => t.demo).map((t) => t.id),
+      ...s.skills.filter((t) => t.demo).map((t) => t.id),
+    ]);
+    s.tasks = s.tasks.filter((t) => !t.demo);
+    s.skills = s.skills.filter((t) => !t.demo);
+    s.events = s.events.filter((e) => !e.demo && !ids.has(e.entity || ""));
+    s.rests = s.rests.filter((r) => !r.demo);
+  });

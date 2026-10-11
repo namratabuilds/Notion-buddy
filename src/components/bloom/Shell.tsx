@@ -1,12 +1,321 @@
-import {useState,createContext,useContext,type ReactNode} from 'react';
-import {Link,useRouterState} from '@tanstack/react-router';
-import {Sprout,LayoutGrid,CalendarDays,ChartNoAxesColumn,Timer,Flower2,Plus,Settings,PanelLeft,ChevronRight,Leaf,Menu,Coffee,Heart} from 'lucide-react';
-import {Button} from '@/components/ui/button';
-import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
-import {useBloom,mutate,event,loadDemo,removeDemo,declareRest} from '@/lib/bloom/store';
-import {dayKey} from '@/lib/bloom/engine';
-import {TaskEditor} from './TaskEditor';
-const UI=createContext({addTask:()=>{},settings:()=>{},rest:()=>{}});
-export const useBloomUI=()=>useContext(UI);
-const nav=[{to:'/',name:'Overview',icon:LayoutGrid},{to:'/plan',name:'Plan & Calendar',icon:CalendarDays},{to:'/capacity',name:'Capacity Check',icon:ChartNoAxesColumn},{to:'/focus',name:'Focus Room',icon:Timer},{to:'/garden',name:'Skill Garden',icon:Flower2}] as const;
-export function Shell({children}:{children:ReactNode}){const s=useBloom();const path=useRouterState({select:x=>x.location.pathname});const [collapsed,setCollapsed]=useState(false);const [mobile,setMobile]=useState(false);const [task,setTask]=useState(false);const [settings,setSettings]=useState(false);const [rest,setRest]=useState(false);const [name,setName]=useState('');const [capacity,setCapacity]=useState(20);const [intention,setIntention]=useState('');const [restDate,setRestDate]=useState(dayKey());const [restType,setRestType]=useState('Full day');const [start,setStart]=useState('12:00');const [end,setEnd]=useState('18:00');const openSettings=()=>{setName(s.name);setCapacity(s.capacity);setIntention(s.intention);setSettings(true);};const current=nav.find(n=>n.to===path)?.name||'Overview';return <UI.Provider value={{addTask:()=>setTask(true),settings:openSettings,rest:()=>setRest(true)}}><div className="bloom-shell"><aside className={`sidebar ${collapsed?'collapsed':''} ${mobile?'mobile-open':''}`}><Link to="/" className="brand"><Sprout/>bloom<span className="sr-only">Bloom home</span></Link><div className="brand-caption">A little progress. A lot of possibility.</div><div className="nav-label">YOUR SPACE</div><nav>{nav.map(n=><Button asChild variant="ghost" key={n.to} className={`nav-link ${path===n.to?'active':''}`}><Link to={n.to} onClick={()=>setMobile(false)}><n.icon/><span>{n.name}</span></Link></Button>)}</nav><Button className="sidebar-add" onClick={()=>{setTask(true);setMobile(false);}}><Plus/><span>Add a task</span></Button><div className="sidebar-bottom"><div className="sidebar-quote"><Sprout size={24}/><p>Small steps.<br/>Deep roots.<br/>Beautiful growth.</p></div><Button variant="ghost" className="nav-link w-full justify-start" onClick={openSettings}><Settings/><span>Settings</span></Button><div className="profile"><div className="avatar">{s.name?s.name.slice(0,2).toUpperCase():'YO'}</div><div className="profile-copy"><div className="profile-name">{s.name||'Your little space'}</div><div className="profile-note">Growing at your own pace</div></div><Button size="icon" variant="ghost" title="Edit profile" aria-label="Edit profile" onClick={openSettings}><ChevronRight/></Button></div></div></aside><div className="main-shell"><header className="topbar"><div className="breadcrumb"><Button className="mobile-menu" size="icon" variant="ghost" aria-label="Open navigation" onClick={()=>setMobile(!mobile)}><Menu/></Button><span>Your workspace</span><ChevronRight size={12}/><strong>{current}</strong></div><div className="top-actions"><span className="local-status"><i/>Saved on this device</span>{s.tasks.some(t=>t.demo)?<><span className="demo-mark">DEMO WEEK</span><Button size="sm" variant="ghost" onClick={()=>{if(confirm('Remove only demo records? Your own tasks and skills will stay.'))removeDemo();}}>Clear demo</Button></>:<Button size="sm" variant="outline" onClick={loadDemo}><Sprout/>Load Demo Week</Button>}<Button variant="ghost" size="icon" title="Collapse sidebar" aria-label="Collapse sidebar" onClick={()=>setCollapsed(!collapsed)}><PanelLeft/></Button></div></header><main className="page-content">{children}<footer className="page-footer"><span><Leaf/>A little progress is still progress.</span><span>Made for your pace, not the race.<Heart/></span></footer></main></div></div>{task&&<TaskEditor onClose={()=>setTask(false)}/>}<Dialog open={settings} onOpenChange={setSettings}><DialogContent className="dialog-content"><DialogTitle className="dialog-title">Make this space yours</DialogTitle><DialogDescription>A realistic plan leaves room for life.</DialogDescription><form onSubmit={async e=>{e.preventDefault();await mutate(x=>{x.name=name.trim();x.capacity=capacity;x.intention=intention;x.onboarded=true;event(x,'capacity-updated');});setSettings(false);}}><div className="form-grid"><label className="form-full">Your name<input required value={name} onChange={e=>setName(e.target.value)} placeholder="What should we call you?"/></label><label className="form-full">Weekly available study hours<input type="number" min="1" max="112" required value={capacity} onChange={e=>setCapacity(Number(e.target.value))}/></label><label className="form-full">Daily intention<input value={intention} onChange={e=>setIntention(e.target.value)} maxLength={150}/></label></div><div className="form-actions"><Button type="submit">Save preferences</Button></div></form></DialogContent></Dialog><Dialog open={rest} onOpenChange={setRest}><DialogContent className="dialog-content"><DialogTitle className="dialog-title">Room to rest</DialogTitle><DialogDescription>Your growth doesn’t disappear when you take a break.</DialogDescription><form onSubmit={async e=>{e.preventDefault();if(restType==='Partial day'&&start>=end)return;await declareRest(restDate,restType==='Full day'?'00:00':start,restType==='Full day'?'23:59':end);setRest(false);}}><div className="form-grid"><label>Rest date<input required type="date" value={restDate} onChange={e=>setRestDate(e.target.value)}/></label><label>Rest period<select value={restType} onChange={e=>setRestType(e.target.value)}><option>Full day</option><option>Partial day</option></select></label>{restType==='Partial day'&&<><label>From<input type="time" required value={start} onChange={e=>setStart(e.target.value)}/></label><label>Until<input type="time" required value={end} onChange={e=>setEnd(e.target.value)}/></label></>}</div>{restType==='Partial day'&&start>=end&&<p className="form-error">End time must be after start time.</p>}<div className="form-actions"><Button type="submit"><Coffee/>Declare rest</Button></div></form></DialogContent></Dialog></UI.Provider>;}
+import { useState, createContext, useContext, type ReactNode } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import {
+  Sprout,
+  LayoutGrid,
+  CalendarDays,
+  ChartNoAxesColumn,
+  Timer,
+  Flower2,
+  Plus,
+  Settings,
+  PanelLeft,
+  ChevronRight,
+  Leaf,
+  Menu,
+  Coffee,
+  Heart,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useBloom, mutate, event, loadDemo, removeDemo, declareRest } from "@/lib/bloom/store";
+import { dayKey } from "@/lib/bloom/engine";
+import { TaskEditor } from "./TaskEditor";
+const UI = createContext({ addTask: () => {}, settings: () => {}, rest: () => {} });
+export const useBloomUI = () => useContext(UI);
+const nav = [
+  { to: "/", name: "Overview", icon: LayoutGrid },
+  { to: "/plan", name: "Plan & Calendar", icon: CalendarDays },
+  { to: "/capacity", name: "Capacity Check", icon: ChartNoAxesColumn },
+  { to: "/focus", name: "Focus Room", icon: Timer },
+  { to: "/garden", name: "Skill Garden", icon: Flower2 },
+] as const;
+export function Shell({ children }: { children: ReactNode }) {
+  const s = useBloom();
+  const path = useRouterState({ select: (x) => x.location.pathname });
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobile, setMobile] = useState(false);
+  const [task, setTask] = useState(false);
+  const [settings, setSettings] = useState(false);
+  const [rest, setRest] = useState(false);
+  const [name, setName] = useState("");
+  const [capacity, setCapacity] = useState(20);
+  const [intention, setIntention] = useState("");
+  const [restDate, setRestDate] = useState(dayKey());
+  const [restType, setRestType] = useState("Full day");
+  const [start, setStart] = useState("12:00");
+  const [end, setEnd] = useState("18:00");
+  const openSettings = () => {
+    setName(s.name);
+    setCapacity(s.capacity);
+    setIntention(s.intention);
+    setSettings(true);
+  };
+  const current = nav.find((n) => n.to === path)?.name || "Overview";
+  return (
+    <UI.Provider
+      value={{ addTask: () => setTask(true), settings: openSettings, rest: () => setRest(true) }}
+    >
+      <div className="bloom-shell">
+        <aside className={`sidebar ${collapsed ? "collapsed" : ""} ${mobile ? "mobile-open" : ""}`}>
+          <Link to="/" className="brand">
+            <Sprout />
+            bloom<span className="sr-only">Bloom home</span>
+          </Link>
+          <div className="brand-caption">A little progress. A lot of possibility.</div>
+          <div className="nav-label">YOUR SPACE</div>
+          <nav>
+            {nav.map((n) => (
+              <Button
+                asChild
+                variant="ghost"
+                key={n.to}
+                className={`nav-link ${path === n.to ? "active" : ""}`}
+              >
+                <Link to={n.to} onClick={() => setMobile(false)}>
+                  <n.icon />
+                  <span>{n.name}</span>
+                </Link>
+              </Button>
+            ))}
+          </nav>
+          <Button
+            className="sidebar-add"
+            onClick={() => {
+              setTask(true);
+              setMobile(false);
+            }}
+          >
+            <Plus />
+            <span>Add a task</span>
+          </Button>
+          <div className="sidebar-bottom">
+            <div className="sidebar-quote">
+              <Sprout size={24} />
+              <p>
+                Small steps.
+                <br />
+                Deep roots.
+                <br />
+                Beautiful growth.
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              className="nav-link w-full justify-start"
+              onClick={openSettings}
+            >
+              <Settings />
+              <span>Settings</span>
+            </Button>
+            <div className="profile">
+              <div className="avatar">{s.name ? s.name.slice(0, 2).toUpperCase() : "YO"}</div>
+              <div className="profile-copy">
+                <div className="profile-name">{s.name || "Your little space"}</div>
+                <div className="profile-note">Growing at your own pace</div>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                title="Edit profile"
+                aria-label="Edit profile"
+                onClick={openSettings}
+              >
+                <ChevronRight />
+              </Button>
+            </div>
+          </div>
+        </aside>
+        <div className="main-shell">
+          <header className="topbar">
+            <div className="breadcrumb">
+              <Button
+                className="mobile-menu"
+                size="icon"
+                variant="ghost"
+                aria-label="Open navigation"
+                onClick={() => setMobile(!mobile)}
+              >
+                <Menu />
+              </Button>
+              <span>Your workspace</span>
+              <ChevronRight size={12} />
+              <strong>{current}</strong>
+            </div>
+            <div className="top-actions">
+              <span className="local-status">
+                <i />
+                Saved on this device
+              </span>
+              {s.tasks.some((t) => t.demo) ? (
+                <>
+                  <span className="demo-mark">DEMO WEEK</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm("Remove only demo records? Your own tasks and skills will stay."))
+                        removeDemo();
+                    }}
+                  >
+                    Clear demo
+                  </Button>
+                </>
+              ) : (
+                <Button size="sm" variant="outline" onClick={loadDemo}>
+                  <Sprout />
+                  Load Demo Week
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Collapse sidebar"
+                aria-label="Collapse sidebar"
+                onClick={() => setCollapsed(!collapsed)}
+              >
+                <PanelLeft />
+              </Button>
+            </div>
+          </header>
+          <main className="page-content">
+            {children}
+            <footer className="page-footer">
+              <span>
+                <Leaf />A little progress is still progress.
+              </span>
+              <span>
+                Made for your pace, not the race.
+                <Heart />
+              </span>
+            </footer>
+          </main>
+        </div>
+      </div>
+      {task && <TaskEditor onClose={() => setTask(false)} />}
+      <Dialog open={settings} onOpenChange={setSettings}>
+        <DialogContent className="dialog-content">
+          <DialogTitle className="dialog-title">Make this space yours</DialogTitle>
+          <DialogDescription>A realistic plan leaves room for life.</DialogDescription>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              await mutate((x) => {
+                x.name = name.trim();
+                x.capacity = capacity;
+                x.intention = intention;
+                x.onboarded = true;
+                event(x, "capacity-updated");
+              });
+              setSettings(false);
+            }}
+          >
+            <div className="form-grid">
+              <label className="form-full">
+                Your name
+                <input
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="What should we call you?"
+                />
+              </label>
+              <label className="form-full">
+                Weekly available study hours
+                <input
+                  type="number"
+                  min="1"
+                  max="112"
+                  required
+                  value={capacity}
+                  onChange={(e) => setCapacity(Number(e.target.value))}
+                />
+              </label>
+              <label className="form-full">
+                Daily intention
+                <input
+                  value={intention}
+                  onChange={(e) => setIntention(e.target.value)}
+                  maxLength={150}
+                />
+              </label>
+            </div>
+            <div className="form-actions">
+              <Button type="submit">Save preferences</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={rest} onOpenChange={setRest}>
+        <DialogContent className="dialog-content">
+          <DialogTitle className="dialog-title">Room to rest</DialogTitle>
+          <DialogDescription>
+            Your growth doesn’t disappear when you take a break.
+          </DialogDescription>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (restType === "Partial day" && start >= end) return;
+              await declareRest(
+                restDate,
+                restType === "Full day" ? "00:00" : start,
+                restType === "Full day" ? "23:59" : end,
+              );
+              setRest(false);
+            }}
+          >
+            <div className="form-grid">
+              <label>
+                Rest date
+                <input
+                  required
+                  type="date"
+                  value={restDate}
+                  onChange={(e) => setRestDate(e.target.value)}
+                />
+              </label>
+              <label>
+                Rest period
+                <select value={restType} onChange={(e) => setRestType(e.target.value)}>
+                  <option>Full day</option>
+                  <option>Partial day</option>
+                </select>
+              </label>
+              {restType === "Partial day" && (
+                <>
+                  <label>
+                    From
+                    <input
+                      type="time"
+                      required
+                      value={start}
+                      onChange={(e) => setStart(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Until
+                    <input
+                      type="time"
+                      required
+                      value={end}
+                      onChange={(e) => setEnd(e.target.value)}
+                    />
+                  </label>
+                </>
+              )}
+            </div>
+            {restType === "Partial day" && start >= end && (
+              <p className="form-error">End time must be after start time.</p>
+            )}
+            <div className="form-actions">
+              <Button type="submit">
+                <Coffee />
+                Declare rest
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </UI.Provider>
+  );
+}
