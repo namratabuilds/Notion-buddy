@@ -1,24 +1,326 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { format, differenceInCalendarDays } from "date-fns";
+import {
+  CalendarDays,
+  ArrowUpRight,
+  Sprout,
+  Coffee,
+  Sun,
+  Leaf,
+  ArrowRight,
+  Info,
+} from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useBloom } from "@/lib/bloom/store";
+import { dayKey, summary, plantState, weekDays } from "@/lib/bloom/engine";
+import { bloomHead } from "@/lib/bloom/meta";
+import { Plant } from "@/components/bloom/Plant";
+import { Tasks } from "@/components/bloom/Tasks";
+import { useBloomUI } from "@/components/bloom/Shell";
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () =>
+    bloomHead(
+      "Your overview",
+      "Plan realistically, make room for rest, and watch your progress take root with Bloom.",
+    ),
+  component: Overview,
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Overview() {
+  const s = useBloom();
+  const ui = useBloomUI();
+  const [breakdown, setBreakdown] = useState(false);
+  const now = new Date();
+  const today = dayKey(now);
+  const stats = summary(s);
+  const p = plantState(s);
+  const focusToday = s.events
+    .filter((e) => e.type === "focus-completed" && dayKey(new Date(e.at)) === today)
+    .reduce((n, e) => n + (e.minutes || 0), 0);
+  const tasks = s.tasks.filter((t) => t.date === today);
+  const deadlines = s.tasks
+    .filter((t) => t.deadline && !t.done)
+    .sort((a, b) => a.deadline.localeCompare(b.deadline))
+    .slice(0, 3);
+  const flowers = s.skills.filter(
+    (sk) => sk.milestones.length && sk.milestones.every((m) => m.done),
+  ).length;
+  const days = weekDays();
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <>
+      <div className="page-heading">
+        <div>
+          <div className="eyebrow">YOUR DAY, AT YOUR PACE</div>
+          <h1>
+            Hello, {s.name || "little grower"} <span className="text-sage">.</span>
+          </h1>
+          <p>A fresh day to take small steps toward big things.</p>
+        </div>
+        <div className="date-pill">
+          <CalendarDays />
+          {format(now, "EEEE, MMM d, yyyy")}
+        </div>
+      </div>
+      {!s.onboarded && (
+        <div className="onboarding-band">
+          <div>
+            <h3>A little room for your real life.</h3>
+            <p>Set the study hours that feel manageable for you.</p>
+          </div>
+          <Button size="sm" onClick={ui.settings}>
+            Set my pace
+            <ArrowRight />
+          </Button>
+        </div>
+      )}
+      <div className="overview-top">
+        <section className="plant-panel">
+          <div className="panel-title">
+            <h2>Your little bloom</h2>
+            <span className="badge">
+              <Leaf />
+              {p.state}
+            </span>
+          </div>
+          <div className="plant-visual">
+            <div className="plant-annotation">
+              <Sprout />
+              <p>
+                {p.growth
+                  ? "Every small step adds a little life."
+                  : "New beginnings have deep potential."}
+              </p>
+            </div>
+            <Plant health={p.health} growth={p.growth} flowers={flowers} />
+            <div className="health-note">
+              <Button
+                variant="ghost"
+                className="h-auto p-0"
+                onClick={() => setBreakdown(true)}
+                title="See plant health breakdown"
+              >
+                <strong>
+                  {p.health}
+                  <small className="text-xs"> /100</small>
+                </strong>
+              </Button>
+              <span>{p.provisional ? "Provisional health" : "Plant health"}</span>
+            </div>
+          </div>
+          <p className="plant-message">
+            {p.state === "Resting"
+              ? "Taking a breath is part of growing."
+              : p.growth
+                ? "You’re growing, one small step at a time."
+                : "Your story is just beginning."}
+          </p>
+          <div className="plant-metrics">
+            <div>
+              <strong>
+                {Math.round(focusToday)} <small className="text-xs">min</small>
+              </strong>
+              <span>Today’s focus</span>
+            </div>
+            <div>
+              <strong>{p.adherence}%</strong>
+              <span>Plan adherence</span>
+            </div>
+            <div>
+              <strong>{p.consistency}%</strong>
+              <span>7-day consistency</span>
+            </div>
+          </div>
+          <div className="flex justify-center mt-4">
+            <Link to="/garden" className="text-link">
+              Explore your garden
+              <ArrowUpRight />
+            </Link>
+          </div>
+        </section>
+        <div className="right-stack">
+          <section className="week-panel">
+            <div className="panel-title">
+              <h2>A little look at your week</h2>
+              <CalendarDays size={16} className="text-muted-foreground" />
+            </div>
+            <p className="week-dates">
+              {format(new Date(days[0] + "T12:00:00"), "MMM d")} –{" "}
+              {format(new Date(days[6] + "T12:00:00"), "MMM d, yyyy")}
+            </p>
+            <div className="week-stats">
+              <div>
+                <strong>
+                  {s.capacity}
+                  <small> hrs</small>
+                </strong>
+                <span>Available</span>
+              </div>
+              <div>
+                <strong>
+                  {stats.planned.toFixed(1)}
+                  <small> hrs</small>
+                </strong>
+                <span>Planned</span>
+              </div>
+              <div>
+                <strong>
+                  {stats.completed.toFixed(1)}
+                  <small> hrs</small>
+                </strong>
+                <span>Completed</span>
+              </div>
+            </div>
+            <div className="progress-track">
+              <progress max={Math.max(s.capacity, stats.planned)} value={stats.planned} />
+            </div>
+            <div className="progress-labels">
+              <span>
+                <i /> {stats.remaining} tasks remaining
+              </span>
+              <span>
+                {stats.excess
+                  ? `${stats.excess.toFixed(1)} hrs over capacity`
+                  : `${(s.capacity - stats.planned).toFixed(1)} hrs breathing room`}
+              </span>
+            </div>
+          </section>
+          <div className="capacity-nudge">
+            <Sun />
+            <div>
+              <h3>
+                {stats.excess
+                  ? "Your week could use a little breathing room"
+                  : "A little breathing room looks good on you"}
+              </h3>
+              <p>
+                {stats.excess
+                  ? `You’ve planned ${stats.excess.toFixed(1)} more hours than your available time. Let’s find a gentler balance.`
+                  : "Your plan fits your available hours. Leave some space for the unexpected."}
+              </p>
+              <Link to="/capacity">
+                {stats.excess ? "Let’s rebalance" : "Check your capacity"}
+                <ArrowRight />
+              </Link>
+            </div>
+          </div>
+          <div className="intention-panel">
+            <Sprout />
+            <div>
+              <div className="tiny-label">TODAY’S INTENTION</div>
+              <p>“{s.intention}”</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Edit daily intention"
+              title="Edit daily intention"
+              onClick={ui.settings}
+            >
+              <ArrowUpRight />
+            </Button>
+          </div>
+        </div>
+      </div>
+      <div className="overview-bottom">
+        <section>
+          <div className="section-heading">
+            <h2>
+              Today’s small steps
+              <span className="count">
+                {tasks.filter((t) => t.done).length} of {tasks.length} done
+              </span>
+            </h2>
+            <Button variant="ghost" size="sm" onClick={ui.addTask} className="text-link">
+              Add task +
+            </Button>
+          </div>
+          <Tasks tasks={tasks} />
+          <div className="flex justify-between items-center mt-4">
+            <Link to="/plan" className="text-link">
+              See your full plan
+              <ArrowRight />
+            </Link>
+            <Button variant="ghost" size="sm" onClick={ui.rest} className="text-link">
+              <Coffee />
+              Take a rest day
+            </Button>
+          </div>
+        </section>
+        <section>
+          <div className="section-heading">
+            <h2>On the horizon</h2>
+            <Link to="/plan" className="text-link">
+              View all
+              <ArrowUpRight />
+            </Link>
+          </div>
+          <div className="deadline-list">
+            {deadlines.length ? (
+              deadlines.map((t) => {
+                const d = new Date(t.deadline + "T12:00:00");
+                const left = differenceInCalendarDays(d, now);
+                return (
+                  <Link to="/plan" key={t.id} className="deadline-item">
+                    <div className="deadline-date">
+                      <span>{format(d, "MMM")}</span>
+                      <strong>{format(d, "dd")}</strong>
+                    </div>
+                    <div className="deadline-copy">
+                      <h3>{t.title}</h3>
+                      <p>
+                        {t.category} · {t.priority} priority
+                      </p>
+                    </div>
+                    <span className="deadline-in">
+                      {left < 0 ? "Overdue" : left === 0 ? "Today" : `In ${left} days`}
+                    </span>
+                  </Link>
+                );
+              })
+            ) : (
+              <div className="panel empty">
+                <Sun />
+                Clear skies ahead. No deadlines yet.
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+      <Dialog open={breakdown} onOpenChange={setBreakdown}>
+        <DialogContent className="dialog-content">
+          <DialogTitle className="dialog-title">A little look at your growth</DialogTitle>
+          <DialogDescription>
+            {p.provisional
+              ? "A provisional baseline while your history takes root."
+              : "Based on your recorded progress, not hours spent being busy."}
+          </DialogDescription>
+          <div className="health-breakdown">
+            <div className="health-line">
+              <span>Plan adherence · 40% weight</span>
+              <strong>{p.adherence}%</strong>
+            </div>
+            <div className="health-line">
+              <span>Focus target progress · 30% weight</span>
+              <strong>{p.focus}%</strong>
+            </div>
+            <div className="health-line">
+              <span>Seven-day consistency · 30% weight</span>
+              <strong>{p.consistency}%</strong>
+            </div>
+            <div className="health-line">
+              <span>Health after safety floor and rest protection</span>
+              <strong>{p.health}/100</strong>
+            </div>
+            <p className="text-xs text-muted-foreground leading-6">
+              <Info size={14} className="inline mr-1" />
+              These initial weights are product assumptions, not scientific measurements. Health
+              never falls below 40. Rest stays neutral, daily drops are limited, and valid progress
+              can restore health immediately.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

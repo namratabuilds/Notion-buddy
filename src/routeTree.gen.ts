@@ -10,33 +10,73 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CapacityRouteImport } from './routes/capacity'
+import { Route as FocusRouteImport } from './routes/focus'
+import { Route as GardenRouteImport } from './routes/garden'
+import { Route as PlanRouteImport } from './routes/plan'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CapacityRoute = CapacityRouteImport.update({
+  id: '/capacity',
+  path: '/capacity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FocusRoute = FocusRouteImport.update({
+  id: '/focus',
+  path: '/focus',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GardenRoute = GardenRouteImport.update({
+  id: '/garden',
+  path: '/garden',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanRoute = PlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/capacity': typeof CapacityRoute
+  '/focus': typeof FocusRoute
+  '/garden': typeof GardenRoute
+  '/plan': typeof PlanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/capacity': typeof CapacityRoute
+  '/focus': typeof FocusRoute
+  '/garden': typeof GardenRoute
+  '/plan': typeof PlanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/capacity': typeof CapacityRoute
+  '/focus': typeof FocusRoute
+  '/garden': typeof GardenRoute
+  '/plan': typeof PlanRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/capacity' | '/focus' | '/garden' | '/plan'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/capacity' | '/focus' | '/garden' | '/plan'
+  id: '__root__' | '/' | '/capacity' | '/focus' | '/garden' | '/plan'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CapacityRoute: typeof CapacityRoute
+  FocusRoute: typeof FocusRoute
+  GardenRoute: typeof GardenRoute
+  PlanRoute: typeof PlanRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +88,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/capacity': {
+      id: '/capacity'
+      path: '/capacity'
+      fullPath: '/capacity'
+      preLoaderRoute: typeof CapacityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/focus': {
+      id: '/focus'
+      path: '/focus'
+      fullPath: '/focus'
+      preLoaderRoute: typeof FocusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/garden': {
+      id: '/garden'
+      path: '/garden'
+      fullPath: '/garden'
+      preLoaderRoute: typeof GardenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan': {
+      id: '/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof PlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CapacityRoute: CapacityRoute,
+  FocusRoute: FocusRoute,
+  GardenRoute: GardenRoute,
+  PlanRoute: PlanRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
