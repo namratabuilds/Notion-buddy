@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CapacityRouteImport } from './routes/capacity'
+import { Route as PlanRouteImport } from './routes/plan'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CapacityRoute = CapacityRouteImport.update({
+  id: '/capacity',
+  path: '/capacity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanRoute = PlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/capacity': typeof CapacityRoute
+  '/plan': typeof PlanRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/capacity': typeof CapacityRoute
+  '/plan': typeof PlanRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/capacity': typeof CapacityRoute
+  '/plan': typeof PlanRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/capacity' | '/plan'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/capacity' | '/plan'
+  id: '__root__' | '/' | '/capacity' | '/plan'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CapacityRoute: typeof CapacityRoute
+  PlanRoute: typeof PlanRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/capacity': {
+      id: '/capacity'
+      path: '/capacity'
+      fullPath: '/capacity'
+      preLoaderRoute: typeof CapacityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan': {
+      id: '/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof PlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CapacityRoute: CapacityRoute,
+  PlanRoute: PlanRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
