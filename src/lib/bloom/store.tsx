@@ -13,6 +13,8 @@ import {
   type Task,
   type Event,
 } from "./engine";
+import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 class BloomDB extends Dexie {
   declare state: Table<State, string>;
   constructor() {
@@ -21,16 +23,50 @@ class BloomDB extends Dexie {
   }
 }
 export const db = new BloomDB();
+// Local cache key = signed-in user id, so accounts on one device stay separate.
+let userKey: string | null = null;
+let pushTimer: ReturnType<typeof setTimeout> | undefined;
+function schedulePush() {
+  const uid = userKey;
+  if (!uid) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(async () => {
+    const s = await db.state.get(uid);
+    if (!s) return;
+    const { error } = await supabase
+      .from("planner_states")
+      .upsert({ user_id: uid, data: s as unknown as Json, updated_at: new Date().toISOString() });
+    if (error) toast.error("Couldn't sync to your account. Changes are kept on this device.");
+  }, 800);
+}
 export async function mutate(fn: (s: State) => void) {
+  const key = userKey;
+  if (!key) return;
   try {
     await db.transaction("rw", db.state, async () => {
-      const s = (await db.state.get("bloom")) || structuredClone(initial);
+      const s = (await db.state.get(key)) || { ...structuredClone(initial), id: key };
       fn(s);
+      s.id = key;
       await db.state.put(s);
     });
+    schedulePush();
   } catch {
     toast.error("Your change could not be saved. Please try again.");
   }
+}
+export async function saveProfile(name: string, capacity: number, intention: string) {
+  await mutate((x) => {
+    x.name = name;
+    x.capacity = capacity;
+    x.intention = intention;
+    x.onboarded = true;
+    event(x, "capacity-updated");
+  });
+  if (userKey)
+    await supabase
+      .from("profiles")
+      .update({ display_name: name, weekly_capacity: capacity, intention, updated_at: new Date().toISOString() })
+      .eq("id", userKey);
 }
 export function event(
   s: State,
@@ -42,21 +78,66 @@ export function event(
   if (s.events.some((e) => e.id === id)) return;
   s.events.push({ id, type, entity, minutes, at: Date.now() });
 }
+async function hydrate(uid: string) {
+  const [{ data: remote }, { data: profile }] = await Promise.all([
+    supabase.from("planner_states").select("data").eq("user_id", uid).maybeSingle(),
+    supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+  ]);
+  let s: State;
+  if (remote?.data) s = remote.data as unknown as State;
+  else {
+    // First sign-in on this device: carry over records made before accounts existed.
+    const local = (await db.state.get(uid)) || (await db.state.get("bloom"));
+    s = local ? structuredClone(local) : structuredClone(initial);
+  }
+  s.id = uid;
+  if (profile) {
+    if (profile.display_name) s.name = profile.display_name;
+    if (profile.intention) s.intention = profile.intention;
+    if (remote?.data || profile.weekly_capacity !== 20) s.capacity = profile.weekly_capacity;
+  }
+  await db.state.put(s);
+  if (!remote?.data) schedulePush();
+}
 const Context = createContext<State>(initial);
+const UserContext = createContext<{ email: string; id: string } | null>(null);
+export const useBloomUser = () => useContext(UserContext);
 export function BloomProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<{ email: string; id: string } | null>(null);
   const [ready, setReady] = useState(false);
-  const state = useLiveQuery(() => db.state.get("bloom"), [], initial);
+  const state = useLiveQuery(() => (user ? db.state.get(user.id) : undefined), [user?.id]);
   useEffect(() => {
-    db.open()
-      .then(() => setReady(true))
-      .catch(() =>
-        toast.error("Offline storage is unavailable. Allow browser storage and refresh."),
-      );
+    const apply = async (u: { id: string; email?: string } | null | undefined) => {
+      if (!u) {
+        userKey = null;
+        setUser(null);
+        setReady(true);
+        return;
+      }
+      if (userKey === u.id) return;
+      userKey = u.id;
+      setReady(false);
+      try {
+        await db.open();
+        await hydrate(u.id);
+      } catch {
+        toast.error("Couldn't load your planner. Check your connection and refresh.");
+      }
+      setUser({ id: u.id, email: u.email || "" });
+      setReady(true);
+    };
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setTimeout(() => apply(session?.user), 0);
+    });
+    supabase.auth.getUser().then(({ data }) => apply(data.user));
+    return () => sub.subscription.unsubscribe();
   }, []);
   return (
-    <Context.Provider value={state || initial}>
-      {ready ? children : <div className="loading-bloom">Bloom is taking root…</div>}
-    </Context.Provider>
+    <UserContext.Provider value={user}>
+      <Context.Provider value={state || initial}>
+        {ready ? children : <div className="loading-bloom">Bloom is taking root…</div>}
+      </Context.Provider>
+    </UserContext.Provider>
   );
 }
 export const useBloom = () => useContext(Context);

@@ -19,7 +19,7 @@ import { bloomHead } from "@/lib/bloom/meta";
 import { Plant } from "@/components/bloom/Plant";
 import { Tasks } from "@/components/bloom/Tasks";
 import { useBloomUI } from "@/components/bloom/Shell";
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () =>
     bloomHead(
       "Your overview",

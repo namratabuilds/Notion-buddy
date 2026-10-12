@@ -7,7 +7,7 @@ import { activeSeconds, dayKey, plantState } from "@/lib/bloom/engine";
 import { bloomHead } from "@/lib/bloom/meta";
 import { Plant } from "@/components/bloom/Plant";
 import { toast } from "sonner";
-export const Route = createFileRoute("/focus")({
+export const Route = createFileRoute("/_authenticated/focus")({
   head: () =>
     bloomHead(
       "Focus Room",

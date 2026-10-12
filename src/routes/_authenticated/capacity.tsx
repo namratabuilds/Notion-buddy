@@ -7,7 +7,7 @@ import { summary, rebalance, validateProposal, weekDays, type Task } from "@/lib
 import { bloomHead } from "@/lib/bloom/meta";
 import { useBloomUI } from "@/components/bloom/Shell";
 import { toast } from "sonner";
-export const Route = createFileRoute("/capacity")({
+export const Route = createFileRoute("/_authenticated/capacity")({
   head: () =>
     bloomHead(
       "Capacity Check",

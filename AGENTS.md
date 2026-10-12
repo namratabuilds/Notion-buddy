@@ -14,3 +14,5 @@
 - Keep pure capacity, timer, health and milestone calculations separate from React views so critical rules can be tested independently.
 - Mount the shared Bloom provider and navigation shell in the root route, with each of the five screens as a metadata-owning leaf route, so navigation preserves one consistent state.
 - Use controllable semantic-token SVG botanical artwork for plant growth, so leaves and flowers correspond to recorded activity rather than decorative random progress.
+
+- Accounts: sign-in required; planner state synced per user to Cloud with per-user local cache.

@@ -8,7 +8,7 @@ import { skillProgress, dayKey, type Skill } from "@/lib/bloom/engine";
 import { bloomHead } from "@/lib/bloom/meta";
 import { Plant } from "@/components/bloom/Plant";
 import { toast } from "sonner";
-export const Route = createFileRoute("/garden")({
+export const Route = createFileRoute("/_authenticated/garden")({
   head: () =>
     bloomHead(
       "Skill Garden",

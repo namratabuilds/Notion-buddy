@@ -9,122 +9,205 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as CapacityRouteImport } from './routes/capacity'
-import { Route as FocusRouteImport } from './routes/focus'
-import { Route as GardenRouteImport } from './routes/garden'
-import { Route as PlanRouteImport } from './routes/plan'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedCapacityRouteImport } from './routes/_authenticated/capacity'
+import { Route as AuthenticatedFocusRouteImport } from './routes/_authenticated/focus'
+import { Route as AuthenticatedGardenRouteImport } from './routes/_authenticated/garden'
+import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 
-const IndexRoute = IndexRouteImport.update({
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const CapacityRoute = CapacityRouteImport.update({
+const AuthenticatedCapacityRoute = AuthenticatedCapacityRouteImport.update({
   id: '/capacity',
   path: '/capacity',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const FocusRoute = FocusRouteImport.update({
+const AuthenticatedFocusRoute = AuthenticatedFocusRouteImport.update({
   id: '/focus',
   path: '/focus',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const GardenRoute = GardenRouteImport.update({
+const AuthenticatedGardenRoute = AuthenticatedGardenRouteImport.update({
   id: '/garden',
   path: '/garden',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const PlanRoute = PlanRouteImport.update({
+const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
   id: '/plan',
   path: '/plan',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/capacity': typeof CapacityRoute
-  '/focus': typeof FocusRoute
-  '/garden': typeof GardenRoute
-  '/plan': typeof PlanRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/capacity': typeof AuthenticatedCapacityRoute
+  '/focus': typeof AuthenticatedFocusRoute
+  '/garden': typeof AuthenticatedGardenRoute
+  '/plan': typeof AuthenticatedPlanRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/capacity': typeof CapacityRoute
-  '/focus': typeof FocusRoute
-  '/garden': typeof GardenRoute
-  '/plan': typeof PlanRoute
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/capacity': typeof AuthenticatedCapacityRoute
+  '/focus': typeof AuthenticatedFocusRoute
+  '/garden': typeof AuthenticatedGardenRoute
+  '/plan': typeof AuthenticatedPlanRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/capacity': typeof CapacityRoute
-  '/focus': typeof FocusRoute
-  '/garden': typeof GardenRoute
-  '/plan': typeof PlanRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/capacity': typeof AuthenticatedCapacityRoute
+  '/_authenticated/focus': typeof AuthenticatedFocusRoute
+  '/_authenticated/garden': typeof AuthenticatedGardenRoute
+  '/_authenticated/plan': typeof AuthenticatedPlanRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/capacity' | '/focus' | '/garden' | '/plan'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/capacity'
+    | '/focus'
+    | '/garden'
+    | '/plan'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/capacity' | '/focus' | '/garden' | '/plan'
-  id: '__root__' | '/' | '/capacity' | '/focus' | '/garden' | '/plan'
+  to:
+    | '/auth'
+    | '/reset-password'
+    | '/capacity'
+    | '/focus'
+    | '/garden'
+    | '/plan'
+    | '/'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/auth'
+    | '/reset-password'
+    | '/_authenticated/capacity'
+    | '/_authenticated/focus'
+    | '/_authenticated/garden'
+    | '/_authenticated/plan'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  CapacityRoute: typeof CapacityRoute
-  FocusRoute: typeof FocusRoute
-  GardenRoute: typeof GardenRoute
-  PlanRoute: typeof PlanRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/capacity': {
-      id: '/capacity'
+    '/_authenticated/capacity': {
+      id: '/_authenticated/capacity'
       path: '/capacity'
       fullPath: '/capacity'
-      preLoaderRoute: typeof CapacityRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedCapacityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/focus': {
-      id: '/focus'
+    '/_authenticated/focus': {
+      id: '/_authenticated/focus'
       path: '/focus'
       fullPath: '/focus'
-      preLoaderRoute: typeof FocusRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedFocusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/garden': {
-      id: '/garden'
+    '/_authenticated/garden': {
+      id: '/_authenticated/garden'
       path: '/garden'
       fullPath: '/garden'
-      preLoaderRoute: typeof GardenRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedGardenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/plan': {
-      id: '/plan'
+    '/_authenticated/plan': {
+      id: '/_authenticated/plan'
       path: '/plan'
       fullPath: '/plan'
-      preLoaderRoute: typeof PlanRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedPlanRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCapacityRoute: typeof AuthenticatedCapacityRoute
+  AuthenticatedFocusRoute: typeof AuthenticatedFocusRoute
+  AuthenticatedGardenRoute: typeof AuthenticatedGardenRoute
+  AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCapacityRoute: AuthenticatedCapacityRoute,
+  AuthenticatedFocusRoute: AuthenticatedFocusRoute,
+  AuthenticatedGardenRoute: AuthenticatedGardenRoute,
+  AuthenticatedPlanRoute: AuthenticatedPlanRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  CapacityRoute: CapacityRoute,
-  FocusRoute: FocusRoute,
-  GardenRoute: GardenRoute,
-  PlanRoute: PlanRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
