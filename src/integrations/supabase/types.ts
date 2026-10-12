@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      planner_states: {
+        Row: {
+          data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          intention: string
+          updated_at: string
+          weekly_capacity: number
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id: string
+          intention?: string
+          updated_at?: string
+          weekly_capacity?: number
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          intention?: string
+          updated_at?: string
+          weekly_capacity?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
