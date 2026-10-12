@@ -15,10 +15,13 @@ import {
   Menu,
   Coffee,
   Heart,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useBloom, mutate, event, loadDemo, removeDemo, declareRest } from "@/lib/bloom/store";
+import { useBloom, useBloomUser, saveProfile, loadDemo, removeDemo, declareRest } from "@/lib/bloom/store";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
 import { dayKey } from "@/lib/bloom/engine";
 import { TaskEditor } from "./TaskEditor";
 const UI = createContext({ addTask: () => {}, settings: () => {}, rest: () => {} });
@@ -32,6 +35,8 @@ const nav = [
 ] as const;
 export function Shell({ children }: { children: ReactNode }) {
   const s = useBloom();
+  const user = useBloomUser();
+  const navigate = useNavigate();
   const path = useRouterState({ select: (x) => x.location.pathname });
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
@@ -200,13 +205,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <form
             onSubmit={async (e) => {
               e.preventDefault();
-              await mutate((x) => {
-                x.name = name.trim();
-                x.capacity = capacity;
-                x.intention = intention;
-                x.onboarded = true;
-                event(x, "capacity-updated");
-              });
+              await saveProfile(name.trim(), capacity, intention);
               setSettings(false);
             }}
           >
@@ -241,6 +240,19 @@ export function Shell({ children }: { children: ReactNode }) {
               </label>
             </div>
             <div className="form-actions">
+              <span className="auth-sub">{user?.email}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={async () => {
+                  setSettings(false);
+                  await supabase.auth.signOut();
+                  navigate({ to: "/auth", replace: true });
+                }}
+              >
+                <LogOut />
+                Sign out
+              </Button>
               <Button type="submit">Save preferences</Button>
             </div>
           </form>

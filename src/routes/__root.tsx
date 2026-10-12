@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -123,14 +124,20 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const path = useRouterState({ select: (x) => x.location.pathname });
+  const bare = path === "/auth" || path === "/reset-password";
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <BloomProvider>
-        <Shell>
+        {bare ? (
           <Outlet />
-        </Shell>
+        ) : (
+          <Shell>
+            <Outlet />
+          </Shell>
+        )}
       </BloomProvider>
       <Toaster position="bottom-right" />
     </QueryClientProvider>
