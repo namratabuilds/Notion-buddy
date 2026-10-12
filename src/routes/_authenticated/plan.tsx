@@ -9,7 +9,7 @@ import { bloomHead } from "@/lib/bloom/meta";
 import { Tasks } from "@/components/bloom/Tasks";
 import { TaskEditor } from "@/components/bloom/TaskEditor";
 import { useBloomUI } from "@/components/bloom/Shell";
-export const Route = createFileRoute("/plan")({
+export const Route = createFileRoute("/_authenticated/plan")({
   head: () =>
     bloomHead(
       "Plan & Calendar",
