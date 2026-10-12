@@ -1,24 +1,22 @@
-# Offline Notion Buddy
+# My First Vibe-Coded Website
 
-use @connector:notion:"Notion" bloom page for any extra details
+My first step into AI-assisted web development, built using [Lovable](https://lovable.dev). This project explores how AI can transform ideas into functional web experiences.
 
-This project was built with [Lovable](https://lovable.dev).
+## Features
 
-## Build with Lovable
+- **User Authentication:** Sign-up and login functionality.
+- **Modern UI:** Clean and responsive user interface.
+- **AI-Assisted Development:** Built using AI-powered development workflows.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/a1bc1c81-5121-4589-92d5-bac07643a0ea).
+## Tech Stack
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- Lovable
+- Authentication
 
-## Development
+## Key Learnings
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+- Understanding AI-assisted development.
+- Implementing user authentication.
+- Turning an idea into a functional web application.
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+**The beginning of my journey in building, experimenting, and creating with AI.**
