@@ -9,122 +9,128 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as CapacityRouteImport } from './routes/capacity'
-import { Route as FocusRouteImport } from './routes/focus'
-import { Route as GardenRouteImport } from './routes/garden'
-import { Route as PlanRouteImport } from './routes/plan'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedCapacityRouteImport } from './routes/_authenticated/capacity'
+import { Route as AuthenticatedFocusRouteImport } from './routes/_authenticated/focus'
+import { Route as AuthenticatedGardenRouteImport } from './routes/_authenticated/garden'
+import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/_authenticated/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CapacityRoute = CapacityRouteImport.update({
-  id: '/capacity',
+const AuthenticatedCapacityRoute = AuthenticatedCapacityRouteImport.update({
+  id: '/_authenticated/capacity',
   path: '/capacity',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FocusRoute = FocusRouteImport.update({
-  id: '/focus',
+const AuthenticatedFocusRoute = AuthenticatedFocusRouteImport.update({
+  id: '/_authenticated/focus',
   path: '/focus',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GardenRoute = GardenRouteImport.update({
-  id: '/garden',
+const AuthenticatedGardenRoute = AuthenticatedGardenRouteImport.update({
+  id: '/_authenticated/garden',
   path: '/garden',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PlanRoute = PlanRouteImport.update({
-  id: '/plan',
+const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
+  id: '/_authenticated/plan',
   path: '/plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/capacity': typeof CapacityRoute
-  '/focus': typeof FocusRoute
-  '/garden': typeof GardenRoute
-  '/plan': typeof PlanRoute
+  '/capacity': typeof AuthenticatedCapacityRoute
+  '/focus': typeof AuthenticatedFocusRoute
+  '/garden': typeof AuthenticatedGardenRoute
+  '/plan': typeof AuthenticatedPlanRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/capacity': typeof CapacityRoute
-  '/focus': typeof FocusRoute
-  '/garden': typeof GardenRoute
-  '/plan': typeof PlanRoute
+  '/capacity': typeof AuthenticatedCapacityRoute
+  '/focus': typeof AuthenticatedFocusRoute
+  '/garden': typeof AuthenticatedGardenRoute
+  '/plan': typeof AuthenticatedPlanRoute
+  '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/capacity': typeof CapacityRoute
-  '/focus': typeof FocusRoute
-  '/garden': typeof GardenRoute
-  '/plan': typeof PlanRoute
+  '/_authenticated/capacity': typeof AuthenticatedCapacityRoute
+  '/_authenticated/focus': typeof AuthenticatedFocusRoute
+  '/_authenticated/garden': typeof AuthenticatedGardenRoute
+  '/_authenticated/plan': typeof AuthenticatedPlanRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/capacity' | '/focus' | '/garden' | '/plan'
+  fullPaths: '/capacity' | '/focus' | '/garden' | '/plan' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/capacity' | '/focus' | '/garden' | '/plan'
-  id: '__root__' | '/' | '/capacity' | '/focus' | '/garden' | '/plan'
+  to: '/capacity' | '/focus' | '/garden' | '/plan' | '/'
+  id:
+    | '__root__'
+    | '/_authenticated/capacity'
+    | '/_authenticated/focus'
+    | '/_authenticated/garden'
+    | '/_authenticated/plan'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  CapacityRoute: typeof CapacityRoute
-  FocusRoute: typeof FocusRoute
-  GardenRoute: typeof GardenRoute
-  PlanRoute: typeof PlanRoute
+  AuthenticatedCapacityRoute: typeof AuthenticatedCapacityRoute
+  AuthenticatedFocusRoute: typeof AuthenticatedFocusRoute
+  AuthenticatedGardenRoute: typeof AuthenticatedGardenRoute
+  AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/capacity': {
-      id: '/capacity'
+    '/_authenticated/capacity': {
+      id: '/_authenticated/capacity'
       path: '/capacity'
       fullPath: '/capacity'
-      preLoaderRoute: typeof CapacityRouteImport
+      preLoaderRoute: typeof AuthenticatedCapacityRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/focus': {
-      id: '/focus'
+    '/_authenticated/focus': {
+      id: '/_authenticated/focus'
       path: '/focus'
       fullPath: '/focus'
-      preLoaderRoute: typeof FocusRouteImport
+      preLoaderRoute: typeof AuthenticatedFocusRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/garden': {
-      id: '/garden'
+    '/_authenticated/garden': {
+      id: '/_authenticated/garden'
       path: '/garden'
       fullPath: '/garden'
-      preLoaderRoute: typeof GardenRouteImport
+      preLoaderRoute: typeof AuthenticatedGardenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/plan': {
-      id: '/plan'
+    '/_authenticated/plan': {
+      id: '/_authenticated/plan'
       path: '/plan'
       fullPath: '/plan'
-      preLoaderRoute: typeof PlanRouteImport
+      preLoaderRoute: typeof AuthenticatedPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  CapacityRoute: CapacityRoute,
-  FocusRoute: FocusRoute,
-  GardenRoute: GardenRoute,
-  PlanRoute: PlanRoute,
+  AuthenticatedCapacityRoute: AuthenticatedCapacityRoute,
+  AuthenticatedFocusRoute: AuthenticatedFocusRoute,
+  AuthenticatedGardenRoute: AuthenticatedGardenRoute,
+  AuthenticatedPlanRoute: AuthenticatedPlanRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
